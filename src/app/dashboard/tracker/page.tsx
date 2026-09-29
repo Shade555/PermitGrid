@@ -246,7 +246,7 @@ export default function ApplicationTracker() {
                 <div className="absolute left-8 top-4 bottom-4 w-px bg-border -z-10" />
                 
                 <div className="space-y-8">
-                  {selectedApp.timeline.map((item, index) => (
+                  {selectedApp.timeline.map((item: any, index: number) => (
                     <div key={index} className="flex gap-4">
                       <TimelineIcon status={item.status} />
                       <div className="flex-1 pt-1">
