@@ -21,7 +21,7 @@
 - [x] Approval Details View
 - [x] Main Dashboard View
 
-## Phase 5: Backend & AI Integration (Future)
-- [ ] Setup Python/FastAPI Backend
-- [ ] Setup Supabase (PostgreSQL, Auth, Storage)
+## Phase 5: Backend & AI Integration (Current)
+- [x] Setup Python/FastAPI Backend (Initialized)
+- [x] Setup Supabase (PostgreSQL, Auth, Storage) (Schema created, waiting for credentials)
 - [ ] AI Integration (RAG, Requirements Matching)
