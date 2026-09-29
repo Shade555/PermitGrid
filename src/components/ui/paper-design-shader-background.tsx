@@ -7,7 +7,7 @@ export function GradientBackground() {
     <div className="absolute inset-0 -z-10 overflow-hidden">
       <GrainGradient
         style={{ height: "100%", width: "100%" }}
-        colorBack="hsl(0, 0%, 0%)"
+        colorBack="hsl(222, 47%, 11%)"
         softness={0.76}
         intensity={0.45}
         noise={0}
@@ -17,7 +17,7 @@ export function GradientBackground() {
         scale={1}
         rotation={0}
         speed={1}
-        colors={["hsl(14, 100%, 57%)", "hsl(45, 100%, 51%)", "hsl(340, 82%, 52%)"]}
+        colors={["hsl(217, 91%, 60%)", "hsl(173, 80%, 40%)", "hsl(222, 80%, 30%)"]}
       />
       <div className="absolute inset-0 -z-10 bg-black/40" />
     </div>
