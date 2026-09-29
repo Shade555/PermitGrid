@@ -57,8 +57,8 @@ export function WizardForm() {
     }
   };
 
-  const updateField = (field: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const updateField = (field: string, value: string | number | null) => {
+    setFormData(prev => ({ ...prev, [field]: value === null ? "" : value }));
   };
 
   const handleSubmit = async () => {

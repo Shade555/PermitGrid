@@ -41,7 +41,7 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
   const status = approval.status || "pending";
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -54,7 +54,7 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2">
                 <StatusIcon status={status} />
-                {isAI && <Bot className="w-4 h-4 text-primary opacity-50" title="AI Identified" />}
+                {isAI && <Bot className="w-4 h-4 text-primary opacity-50" />}
               </div>
               <StatusBadge status={status} />
             </div>
