@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
@@ -26,6 +27,48 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [businessData, setBusinessData] = useState({ name: "Nova Foods Pvt Ltd", location: "Pune, Maharashtra" });
+  const [initials, setInitials] = useState("NF");
+
+  useEffect(() => {
+    // Load Business Profile
+    const savedProfile = localStorage.getItem("permitgrid_profile");
+    if (savedProfile) {
+      try {
+        const parsed = JSON.parse(savedProfile);
+        setBusinessData({
+          name: parsed.business_name || "Nova Foods Pvt Ltd",
+          location: `${parsed.district || "Pune"}, ${parsed.state || "Maharashtra"}`
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load User Initials
+    const userName = localStorage.getItem("permitgrid_user_name");
+    if (userName) {
+      const parts = userName.trim().split(" ");
+      if (parts.length > 1) {
+        setInitials((parts[0][0] + parts[1][0]).toUpperCase());
+      } else {
+        setInitials(parts[0].substring(0, 2).toUpperCase());
+      }
+    } else {
+      // Fallback to business initials
+      if (savedProfile) {
+        try {
+          const parsed = JSON.parse(savedProfile);
+          if (parsed.business_name) {
+            const parts = parsed.business_name.trim().split(" ");
+            if (parts.length > 1) {
+              setInitials((parts[0][0] + parts[1][0]).toUpperCase());
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-muted/20 flex flex-col md:flex-row">
@@ -43,8 +86,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-4 flex-1">
           <div className="mb-6 px-2">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Business</div>
-            <div className="font-medium text-sm">Nova Foods Pvt Ltd</div>
-            <div className="text-xs text-muted-foreground">Pune, Maharashtra</div>
+            <div className="font-medium text-sm line-clamp-1" title={businessData.name}>{businessData.name}</div>
+            <div className="text-xs text-muted-foreground line-clamp-1">{businessData.location}</div>
           </div>
           
           <nav className="space-y-1">
@@ -78,9 +121,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive border border-background"></span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-sm font-medium text-primary">
-              NF
-            </div>
+            <Link href="/dashboard/settings">
+              <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-sm font-medium text-primary cursor-pointer hover:bg-primary/30 transition-colors">
+                {initials}
+              </div>
+            </Link>
           </div>
         </header>
 
