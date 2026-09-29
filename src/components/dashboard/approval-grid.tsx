@@ -71,7 +71,7 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
           </Card>
         </motion.div>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl sm:p-8">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl sm:p-8">
         <DialogHeader className="mb-4">
           <div className="flex items-center justify-between mb-4">
             <StatusBadge status={status} />
