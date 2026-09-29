@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { GradientBackground } from "@/components/ui/paper-design-shader-background";
+import { ShinyButton } from "@/components/ui/shiny-button";
+import { useRouter } from "next/navigation";
 
 const container = {
   hidden: { opacity: 0 },
@@ -23,6 +25,7 @@ const item = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [authMode, setAuthMode] = useState<"none" | "signIn" | "signUp">("none");
   const [activeCard, setActiveCard] = useState<"signIn" | "signUp">("signIn");
   const [isGlitching, setIsGlitching] = useState(false);
@@ -64,7 +67,11 @@ export default function Home() {
             <Button variant="ghost" className="hidden sm:inline-flex hover:bg-white/5" onClick={() => handleOpenAuth("signIn")}>
               Sign In
             </Button>
-            <Button onClick={() => handleOpenAuth("signUp")}>Get Started</Button>
+            <ShinyButton 
+              label="Get Started" 
+              onClick={() => handleOpenAuth("signUp")}
+              className="scale-90 md:scale-100"
+            />
           </div>
         </div>
       </nav>
@@ -94,12 +101,11 @@ export default function Home() {
           </motion.p>
 
           <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/wizard" className="w-full sm:w-auto">
-              <Button size="lg" className="h-14 px-8 text-base md:text-lg w-full shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] hover:shadow-[0_0_60px_-15px_rgba(37,99,235,0.6)] transition-shadow">
-                Build My Approval Grid
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
+            <ShinyButton 
+              label="Build My Approval Grid →" 
+              onClick={() => router.push("/wizard")}
+              className="w-full sm:w-auto"
+            />
           </motion.div>
         </motion.div>
 
