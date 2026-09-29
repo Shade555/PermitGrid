@@ -47,15 +47,14 @@ export default function DocumentCenter() {
       const profileStr = localStorage.getItem("permitgrid_profile");
       const profile = profileStr ? JSON.parse(profileStr) : { industry: "Manufacturing", state: "Maharashtra" };
 
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("industry", profile.industry || "Manufacturing");
+      formData.append("state", profile.state || "Maharashtra");
+
       const res = await fetch("/api/analyze-document", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          file_type: file.type || "application/pdf",
-          industry: profile.industry,
-          state: profile.state
-        })
+        body: formData,
       });
       
       const data = await res.json();

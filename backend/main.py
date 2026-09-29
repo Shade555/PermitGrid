@@ -1,12 +1,18 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import json
+import io
 import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from groq import Groq
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
 
 load_dotenv()
 
@@ -73,7 +79,7 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
     """Create a new business profile and generate initial requirements using Groq LLM + Local Dataset (RAG)"""
     try:
         profile_data = profile.model_dump()
-        
+
         # 1. Attempt to insert profile into Supabase
         try:
             response = supabase.table("business_profiles").insert(profile_data).execute()
@@ -81,16 +87,12 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
         except Exception as db_err:
             new_profile = profile_data
             new_profile["id"] = "mock-id-for-mvp"
-        
+
         # 2. RAG Filtering: Extract relevant approvals from dataset
         context_str = ""
         if not df_approvals.empty:
-            # Filter loosely by state or generic
             mask = df_approvals['State'].str.contains(profile.state, case=False, na=False) | df_approvals['State'].str.contains("Central", case=False, na=False)
             filtered_df = df_approvals[mask]
-            
-            # Convert top 20 relevant rows to JSON string to inject into prompt
-            # (In production, use semantic vector search. For hackathon, strict filtering works perfectly!)
             context_records = filtered_df.head(20).to_dict(orient='records')
             context_str = json.dumps(context_records, indent=2)
 
@@ -99,16 +101,16 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
         if groq_client:
             prompt = f"""
             You are an expert regulatory AI. Using ONLY the provided OFFICIAL DATASET CONTEXT below, determine the top 6 most applicable industrial approvals, NOCs, and licences required for the following business.
-            
+
             BUSINESS PROFILE:
             - Industry: {profile.industry}
             - Activity: {profile.business_activity} ({profile.activity_type})
             - Investment: Rs. {profile.investment_amount}
             - State: {profile.state}
-            
+
             OFFICIAL DATASET CONTEXT (JSON):
             {context_str if context_str else 'No official context found, generate best guess based on Indian law.'}
-            
+
             Respond ONLY with a JSON array of objects mapped to this schema. Do not include markdown formatting outside the JSON.
             Schema for each object:
             - "name": The name of the approval (e.g. "Consent to Establish")
@@ -116,7 +118,7 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
             - "stage": One of "pre-establishment", "pre-operation", or "operations"
             - "why_it_applies": A short explanation based on the profile mapping.
             """
-            
+
             try:
                 chat_completion = groq_client.chat.completions.create(
                     messages=[
@@ -133,10 +135,10 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
                     temperature=0.1,
                     response_format={"type": "json_object"}
                 )
-                
+
                 content = chat_completion.choices[0].message.content
                 parsed = json.loads(content)
-                
+
                 if isinstance(parsed, dict) and "approvals" in parsed:
                     recommended_approvals = parsed["approvals"]
                 elif isinstance(parsed, list):
@@ -146,12 +148,12 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
                         if isinstance(val, list):
                             recommended_approvals = val
                             break
-                            
+
             except Exception as ai_err:
                 print(f"AI Generation failed: {ai_err}")
-        
+
         return {
-            "status": "success", 
+            "status": "success",
             "data": {
                 "profile": new_profile,
                 "recommended_approvals": recommended_approvals
@@ -160,37 +162,95 @@ def create_business_profile(profile: BusinessProfileBase, supabase: Client = Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-class DocumentAnalyzeRequest(BaseModel):
-    filename: str
-    file_type: str
-    industry: str
-    state: str
+
+def extract_text_from_pdf(file_bytes: bytes) -> str:
+    """Extract text content from a PDF file using PyPDF2."""
+    if PdfReader is None:
+        return ""
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        text_parts = []
+        for page in reader.pages[:10]:  # Cap at 10 pages to avoid huge prompts
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(page_text.strip())
+        return "\n".join(text_parts)
+    except Exception as e:
+        print(f"PDF extraction error: {e}")
+        return ""
+
 
 @app.post("/api/analyze-document")
-def analyze_document(req: DocumentAnalyzeRequest):
-    """Use AI to simulate document verification"""
+async def analyze_document(
+    file: UploadFile = File(...),
+    industry: str = Form("Manufacturing"),
+    state: str = Form("Maharashtra"),
+):
+    """AI-powered document verification with real PDF text extraction."""
     if not groq_client:
         return {"status": "success", "data": {"status": "Valid", "issues": [], "feedback": "AI Not Configured"}}
-        
-    prompt = f"""
-    You are an AI document verifier for Indian industrial compliance.
-    A user uploaded a document named '{req.filename}' (Type: {req.file_type}).
-    The business is in the {req.industry} sector in {req.state}.
-    
-    Determine if this filename looks like a standard required document (e.g., Factory Layout, MOA, PAN Card).
-    Then, simulate a "Readiness Check". Find 1 or 2 plausible issues with this document that an inspector might reject (e.g. "Missing authorized signature", "Not notarized", "Blurry text", "Wrong format").
-    If it sounds like a perfect document, you can return 0 issues.
-    
-    Respond strictly in JSON:
-    {{
-        "document_type_identified": "string",
-        "status": "Needs Revision" or "Ready",
-        "issues": ["Issue 1", "Issue 2"] // empty array if Ready
-    }}
-    """
+
+    file_bytes = await file.read()
+    filename = file.filename or "unknown"
+    file_type = file.content_type or "application/octet-stream"
+
+    # Extract real text from PDFs
+    extracted_text = ""
+    if "pdf" in file_type.lower() or filename.lower().endswith(".pdf"):
+        extracted_text = extract_text_from_pdf(file_bytes)
+
+    # Truncate to ~3000 chars to stay within token limits
+    if len(extracted_text) > 3000:
+        extracted_text = extracted_text[:3000] + "\n...[truncated]"
+
+    if extracted_text:
+        prompt = f"""
+You are an AI document verifier for Indian industrial compliance.
+A user uploaded a document named '{filename}' (Type: {file_type}).
+The business is in the {industry} sector in {state}.
+
+Here is the ACTUAL TEXT CONTENT extracted from the document:
+---
+{extracted_text}
+---
+
+Based on the real content above:
+1. Identify what type of regulatory document this is.
+2. Check for completeness — are key fields like signatures, dates, registration numbers, company names present?
+3. Flag any real issues you detect (e.g., missing signature blocks, no notarization stamp text, missing dates, incomplete sections).
+4. If the content looks complete and valid, return status "Ready" with no issues.
+
+Respond strictly in JSON:
+{{
+    "document_type_identified": "string",
+    "status": "Needs Revision" or "Ready",
+    "issues": ["Issue 1", "Issue 2"]
+}}
+"""
+    else:
+        prompt = f"""
+You are an AI document verifier for Indian industrial compliance.
+A user uploaded a document named '{filename}' (Type: {file_type}).
+The business is in the {industry} sector in {state}.
+
+No text could be extracted from this file (it may be a scanned image or non-PDF).
+Based on the filename alone, determine what type of document this likely is.
+Then provide a general readiness assessment with common issues to check for this document type.
+
+Respond strictly in JSON:
+{{
+    "document_type_identified": "string",
+    "status": "Needs Revision" or "Ready",
+    "issues": ["Issue 1", "Issue 2"]
+}}
+"""
+
     try:
         chat_completion = groq_client.chat.completions.create(
-            messages=[{"role": "system", "content": "Respond in valid JSON only."},{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": "Respond in valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
             model="openai/gpt-oss-120b",
             temperature=0.3,
             response_format={"type": "json_object"}
