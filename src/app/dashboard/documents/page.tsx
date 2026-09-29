@@ -28,34 +28,57 @@ export default function DocumentCenter() {
 
   const filteredDocs = documents.filter(doc => doc.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const handleSimulatedUpload = () => {
+  const [aiResult, setAiResult] = useState<any>(null);
+  
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(30);
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          setShowValidation(true);
-          return 100;
-        }
-        return prev + 20;
+    try {
+      // Simulate reading/uploading delay
+      await new Promise(r => setTimeout(r, 800));
+      setUploadProgress(70);
+
+      const profileStr = localStorage.getItem("permitgrid_profile");
+      const profile = profileStr ? JSON.parse(profileStr) : { industry: "Manufacturing", state: "Maharashtra" };
+
+      const res = await fetch("/api/analyze-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          file_type: file.type || "application/pdf",
+          industry: profile.industry,
+          state: profile.state
+        })
       });
-    }, 400);
+      
+      const data = await res.json();
+      setAiResult(data.data);
+      setUploadProgress(100);
+      setIsUploading(false);
+      setShowValidation(true);
+    } catch (err) {
+      console.error(err);
+      setIsUploading(false);
+    }
   };
 
   const handleApproveValidation = () => {
     setShowValidation(false);
-    setDocuments([{
-      id: Math.random().toString(),
-      name: "Food_Category_Matrix.pdf",
-      type: "FSSAI Document",
-      status: "verified",
-      date: "Oct 15, 2026",
-      usedBy: 1
-    }, ...documents]);
+    if (aiResult) {
+      setDocuments([{
+        id: Math.random().toString(),
+        name: aiResult.document_type_identified || "Uploaded Document",
+        type: "User Upload",
+        status: aiResult.status === "Ready" ? "verified" : "needs_revision",
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        usedBy: 1
+      }, ...documents]);
+    }
   };
 
   return (
@@ -68,10 +91,13 @@ export default function DocumentCenter() {
         
         <Dialog open={showValidation} onOpenChange={setShowValidation}>
           <DialogTrigger>
-            <span onClick={handleSimulatedUpload} className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 ${isUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
-              <FileUp className="w-4 h-4 mr-2" />
-              Upload Document
-            </span>
+            <div>
+              <input type="file" id="doc-upload" className="hidden" onChange={handleUpload} />
+              <label htmlFor="doc-upload" className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 ${isUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
+                <FileUp className="w-4 h-4 mr-2" />
+                {isUploading ? 'Analyzing...' : 'Upload Document'}
+              </label>
+            </div>
           </DialogTrigger>
           
           <DialogContent className="sm:max-w-md">
@@ -86,47 +112,51 @@ export default function DocumentCenter() {
             </DialogHeader>
             
             <div className="space-y-6 py-4">
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Food_Category_Matrix.pdf</p>
-                    <p className="text-xs text-muted-foreground">Detected Type: FSSAI Technical Doc</p>
+              {aiResult ? (
+                <>
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-8 h-8 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{aiResult.document_type_identified || "Document"}</p>
+                        <p className="text-xs text-muted-foreground">Status: {aiResult.status}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-2xl font-bold ${aiResult.status === 'Ready' ? 'text-success' : 'text-destructive'}`}>
+                        {aiResult.status === 'Ready' ? '100%' : '50%'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Readiness Score</p>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-success">92%</p>
-                  <p className="text-xs text-muted-foreground">Readiness Score</p>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold">Validation Results</h4>
-                
-                <div className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Company Name matches profile</p>
-                    <p className="text-muted-foreground text-xs">Found "Nova Foods Pvt Ltd"</p>
+                  
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold">Validation Results</h4>
+                    
+                    {aiResult.issues && aiResult.issues.length > 0 ? (
+                      aiResult.issues.map((issue: string, idx: number) => (
+                        <div key={idx} className="flex items-start gap-3 text-sm">
+                          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-destructive">Issue Detected</p>
+                            <p className="text-muted-foreground text-xs">{issue}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-start gap-3 text-sm">
+                        <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-success">Perfectly Valid</p>
+                          <p className="text-muted-foreground text-xs">No issues detected by the AI.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                
-                <div className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium">All mandatory fields present</p>
-                    <p className="text-muted-foreground text-xs">Categories, additives, and quantities detected.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 text-sm">
-                  <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Missing signature</p>
-                    <p className="text-muted-foreground text-xs">The authorized signatory section appears blank. This might cause a query during review.</p>
-                  </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                <p>Loading AI Results...</p>
+              )}
               
               <Button className="w-full" onClick={handleApproveValidation}>
                 Accept & Save to Vault

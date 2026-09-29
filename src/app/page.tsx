@@ -282,15 +282,20 @@ export default function Home() {
                   <Button 
                     className="w-full mt-4 md:mt-6 h-11"
                     onClick={() => {
-                      // Grab name if on signUp form
                       if (activeCard === "signUp") {
                         const nameInput = document.getElementById("name") as HTMLInputElement;
                         if (nameInput && nameInput.value) {
                           localStorage.setItem("permitgrid_user_name", nameInput.value);
                         }
+                        // Reset profile for new account so it doesn't bypass wizard
+                        localStorage.removeItem("permitgrid_profile");
+                        localStorage.removeItem("permitgrid_approvals");
+                        setAuthMode("none");
+                        router.push("/wizard?new=true");
+                      } else {
+                        setAuthMode("none");
+                        router.push("/wizard");
                       }
-                      setAuthMode("none");
-                      router.push("/wizard");
                     }}
                   >
                     {activeCard === "signIn" ? "Sign In" : "Create Account"}

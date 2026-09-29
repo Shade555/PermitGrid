@@ -211,7 +211,7 @@ export function WizardForm() {
                     <Input 
                       type="number" 
                       value={formData.investment_amount} 
-                      onChange={(e) => updateField("investment_amount", parseFloat(e.target.value))} 
+                      onChange={(e) => updateField("investment_amount", e.target.value === "" ? "" : parseFloat(e.target.value))} 
                       placeholder="50000000" 
                     />
                   </div>
@@ -220,7 +220,7 @@ export function WizardForm() {
                     <Input 
                       type="number" 
                       value={formData.employee_count} 
-                      onChange={(e) => updateField("employee_count", parseInt(e.target.value))} 
+                      onChange={(e) => updateField("employee_count", e.target.value === "" ? "" : parseInt(e.target.value))} 
                       placeholder="80" 
                     />
                   </div>

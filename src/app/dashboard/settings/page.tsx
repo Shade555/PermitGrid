@@ -89,11 +89,11 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" defaultValue={userName} />
+                  <Input key={userName} id="name" defaultValue={userName} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" defaultValue={`${userName.toLowerCase().replace(/\s+/g, ".")}@company.com`} />
+                  <Input key={userName + "-email"} id="email" defaultValue={`${userName.toLowerCase().replace(/\s+/g, ".")}@company.com`} />
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t border-border pt-6">
@@ -116,7 +116,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="org">Organization Name</Label>
-                    <Input id="org" defaultValue={businessName} readOnly className="bg-muted" />
+                    <Input key={businessName} id="org" defaultValue={businessName} readOnly className="bg-muted" />
                     <p className="text-xs text-muted-foreground mt-1">To change your primary business, use the Wizard.</p>
                   </div>
                   <div className="space-y-2">

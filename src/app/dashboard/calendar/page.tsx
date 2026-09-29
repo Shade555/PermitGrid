@@ -1,11 +1,44 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 
 export default function ComplianceCalendar() {
+  const [events, setEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("permitgrid_approvals");
+    if (saved) {
+      try {
+        const approvals = JSON.parse(saved);
+        const dynamicEvents = approvals.map((app: any, idx: number) => {
+          const days = (idx + 1) * 15;
+          const date = new Date();
+          date.setDate(date.getDate() + days);
+          
+          return {
+            id: idx,
+            name: `${app.name} Renewal`,
+            desc: `Mandatory filing/renewal for ${app.authority}`,
+            dateObj: date,
+            month: date.toLocaleString('default', { month: 'short' }),
+            day: date.getDate(),
+            daysAway: days,
+            urgent: days <= 20
+          };
+        }).sort((a: any, b: any) => a.daysAway - b.daysAway);
+        
+        setEvents(dynamicEvents.length > 0 ? dynamicEvents : []);
+      } catch(e) {}
+    }
+  }, []);
+
+  const urgentEvent = events.find(e => e.urgent);
+  const regularEvents = events.filter(e => !e.urgent);
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto h-full">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -22,60 +55,52 @@ export default function ComplianceCalendar() {
         
         {/* Urgent Renewals */}
         <div className="md:col-span-2 space-y-6">
-          <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="w-5 h-5" />
-                <CardTitle className="text-lg">Urgent Attention Required</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-destructive/20">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-destructive/10 flex flex-col items-center justify-center text-destructive border border-destructive/20 shrink-0">
-                    <span className="text-xs font-semibold uppercase">Nov</span>
-                    <span className="text-lg font-bold leading-none">15</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-base mb-1">Factory License Renewal (DISH)</h4>
-                    <p className="text-sm text-muted-foreground">Expires in 15 days. Factory Inspector visit required post-renewal.</p>
-                  </div>
+          {urgentEvent && (
+            <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-5 h-5" />
+                  <CardTitle className="text-lg">Urgent Attention Required</CardTitle>
                 </div>
-                <Button variant="destructive" size="sm">Initiate Renewal</Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-destructive/20">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-destructive/10 flex flex-col items-center justify-center text-destructive border border-destructive/20 shrink-0">
+                      <span className="text-xs font-semibold uppercase">{urgentEvent.month}</span>
+                      <span className="text-lg font-bold leading-none">{urgentEvent.day}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-base mb-1">{urgentEvent.name}</h4>
+                      <p className="text-sm text-muted-foreground">Expires in {urgentEvent.daysAway} days.</p>
+                    </div>
+                  </div>
+                  <Button variant="destructive" size="sm">Initiate Renewal</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Schedule</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
-              <div className="flex items-center gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary border border-primary/20 shrink-0">
-                  <span className="text-xs font-semibold uppercase">Dec</span>
-                  <span className="text-lg font-bold leading-none">01</span>
+              {events.length === 0 ? (
+                <p className="text-muted-foreground">No upcoming renewals found. Generate approvals in your dashboard first.</p>
+              ) : regularEvents.map((evt) => (
+                <div key={evt.id} className="flex items-center gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary border border-primary/20 shrink-0">
+                    <span className="text-xs font-semibold uppercase">{evt.month}</span>
+                    <span className="text-lg font-bold leading-none">{evt.day}</span>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-base mb-1">{evt.name}</h4>
+                    <p className="text-sm text-muted-foreground">{evt.desc}</p>
+                  </div>
+                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">{evt.daysAway} Days Away</Badge>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-base mb-1">FSSAI Annual Return Filing</h4>
-                  <p className="text-sm text-muted-foreground">Form D-1 filing for the current financial year.</p>
-                </div>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">45 Days Away</Badge>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border">
-                <div className="w-12 h-12 rounded-lg bg-muted flex flex-col items-center justify-center text-muted-foreground border border-border shrink-0">
-                  <span className="text-xs font-semibold uppercase">Jan</span>
-                  <span className="text-lg font-bold leading-none">31</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-base mb-1">MPCB Environmental Statement (Form V)</h4>
-                  <p className="text-sm text-muted-foreground">Annual environmental audit report submission.</p>
-                </div>
-                <Badge variant="outline">Planned</Badge>
-              </div>
-
+              ))}
             </CardContent>
           </Card>
         </div>

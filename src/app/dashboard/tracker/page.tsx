@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { CheckCircle2, Clock, AlertCircle, FileText, ArrowRight, MessageSquareWa
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-const applications = [
+const mockApplications = [
   {
     id: "app-1",
     name: "MPCB Consent to Establish",
@@ -25,38 +25,43 @@ const applications = [
       { step: "Site Inspection", date: "Pending", status: "pending" },
       { step: "Final Approval", date: "Pending", status: "pending" },
     ]
-  },
-  {
-    id: "app-2",
-    name: "Fire NOC (Provisional)",
-    department: "Maharashtra Fire Services",
-    status: "in_progress",
-    submittedOn: "Oct 12, 2026",
-    estimatedCompletion: "Oct 28, 2026",
-    progress: 40,
-    timeline: [
-      { step: "Application Submitted", date: "Oct 12, 2026", status: "completed" },
-      { step: "Initial Scrutiny", date: "Oct 14, 2026", status: "completed" },
-      { step: "Field Officer Assigned", date: "Oct 16, 2026", status: "in_progress" },
-      { step: "Inspection", date: "Pending", status: "pending" },
-      { step: "Approval", date: "Pending", status: "pending" },
-    ]
-  },
-  {
-    id: "app-3",
-    name: "Business Registration",
-    department: "Ministry of Corporate Affairs",
-    status: "approved",
-    submittedOn: "Sep 15, 2026",
-    estimatedCompletion: "Sep 30, 2026",
-    progress: 100,
-    timeline: [
-      { step: "Application Submitted", date: "Sep 15, 2026", status: "completed" },
-      { step: "Document Verification", date: "Sep 20, 2026", status: "completed" },
-      { step: "Final Approval", date: "Sep 30, 2026", status: "completed" },
-    ]
   }
 ];
+
+const generateDynamicTracker = () => {
+  if (typeof window === 'undefined') return mockApplications;
+  const saved = localStorage.getItem("permitgrid_approvals");
+  if (!saved) return mockApplications;
+  
+  try {
+    const approvals = JSON.parse(saved);
+    if (!approvals || approvals.length === 0) return mockApplications;
+    
+    return approvals.slice(0, 3).map((app: any, idx: number) => {
+      const statusMap = ["query_raised", "in_progress", "approved"];
+      const status = statusMap[idx % 3];
+      const progressMap = { "in_progress": 40, "query_raised": 60, "approved": 100 };
+      
+      return {
+        id: `app-${idx}`,
+        name: app.name,
+        department: app.authority,
+        status: status,
+        submittedOn: "Oct 10, 2026",
+        estimatedCompletion: "Nov 15, 2026",
+        progress: progressMap[status as keyof typeof progressMap] || 50,
+        timeline: [
+          { step: "Application Submitted", date: "Oct 10, 2026", status: "completed" },
+          { step: "Initial Scrutiny", date: "Oct 12, 2026", status: "completed" },
+          { step: "Department Verification", date: "Oct 15, 2026", status: status === "approved" ? "completed" : status, note: status === 'query_raised' ? 'Query: Needs clearer document scans.' : undefined },
+          { step: "Final Approval", date: "Pending", status: status === "approved" ? "completed" : "pending" },
+        ]
+      };
+    });
+  } catch (e) {
+    return mockApplications;
+  }
+};
 
 const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
@@ -82,9 +87,16 @@ const TimelineIcon = ({ status }: { status: string }) => {
 };
 
 export default function ApplicationTracker() {
-  const [selectedApp, setSelectedApp] = useState(applications[0]);
+  const [applications, setApplications] = useState<any[]>(mockApplications);
+  const [selectedApp, setSelectedApp] = useState<any>(mockApplications[0]);
   const [resolvingQuery, setResolvingQuery] = useState(false);
   const [queryResolved, setQueryResolved] = useState(false);
+
+  useEffect(() => {
+    const dyn = generateDynamicTracker();
+    setApplications(dyn);
+    if (dyn.length > 0) setSelectedApp(dyn[0]);
+  }, []);
 
   const handleResolveQuery = () => {
     setResolvingQuery(true);
