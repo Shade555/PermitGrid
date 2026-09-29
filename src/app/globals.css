@@ -155,20 +155,26 @@
 
   /* Sleek Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
+    background-color: transparent;
   }
 
   ::-webkit-scrollbar-track {
     background: transparent;
+    margin: 2px;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full transition-colors;
+    @apply bg-muted-foreground/20 rounded-full transition-colors;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-muted-foreground/40;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   /* For Firefox */

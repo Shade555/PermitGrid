@@ -2,8 +2,10 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+import json
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from groq import Groq
 
 load_dotenv()
 
@@ -25,6 +27,9 @@ app.add_middleware(
 # Supabase Client Initialization
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 def get_supabase() -> Client:
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -40,6 +45,10 @@ class BusinessProfileBase(BaseModel):
     investment_amount: float
     employee_count: int
     project_stage: str
+    state: str
+    district: str
+    city: str
+    pin: str
 
 @app.get("/")
 def read_root():
@@ -60,16 +69,85 @@ def get_approvals(supabase: Client = Depends(get_supabase)):
 
 @app.post("/api/business-profile")
 def create_business_profile(profile: BusinessProfileBase, supabase: Client = Depends(get_supabase)):
-    """Create a new business profile and generate initial requirements"""
+    """Create a new business profile and generate initial requirements using Groq LLM"""
     try:
-        # 1. Insert profile
-        response = supabase.table("business_profiles").insert(profile.model_dump()).execute()
-        new_profile = response.data[0]
+        profile_data = profile.model_dump()
         
-        # 2. In a real scenario, this is where the Rules Engine & AI match approvals
-        # For now, we will return the created profile.
+        # 1. Attempt to insert profile into Supabase
+        try:
+            response = supabase.table("business_profiles").insert(profile_data).execute()
+            new_profile = response.data[0]
+        except Exception as db_err:
+            print(f"DB Insert failed (likely RLS or missing user_id): {db_err}")
+            new_profile = profile_data
+            new_profile["id"] = "mock-id-for-mvp"
         
-        return {"status": "success", "data": new_profile}
+        # 2. Use Groq to analyze the profile and return recommended approvals
+        recommended_approvals = []
+        if groq_client:
+            prompt = f"""
+            Analyze the following industrial business profile and list the potential regulatory approvals, NOCs, and licences required in India (specifically {profile.state}).
+            
+            Business Profile:
+            - Industry: {profile.industry}
+            - Activity: {profile.business_activity} ({profile.activity_type})
+            - Investment: Rs. {profile.investment_amount}
+            - Employees: {profile.employee_count}
+            
+            Respond ONLY with a JSON array of objects. Each object should have:
+            - "name": The name of the approval (e.g. "FSSAI State Licence")
+            - "authority": Issuing authority (e.g. "FDA")
+            - "stage": One of "pre-establishment", "pre-operation", or "operations"
+            - "why_it_applies": A short explanation based on the profile.
+            
+            Keep the list to the top 4-6 most critical approvals.
+            """
+            
+            try:
+                chat_completion = groq_client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a regulatory compliance AI for India. You must respond in valid JSON format."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        }
+                    ],
+                    model="llama3-8b-8192",
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+                
+                content = chat_completion.choices[0].message.content
+                print(f"Raw AI Response: {content}")
+                # Safely parse JSON if Groq wrapped it in an object
+                parsed = json.loads(content)
+                
+                if isinstance(parsed, dict) and "approvals" in parsed:
+                    recommended_approvals = parsed["approvals"]
+                elif isinstance(parsed, list):
+                    recommended_approvals = parsed
+                elif isinstance(parsed, dict):
+                    # extract the first list value found
+                    for val in parsed.values():
+                        if isinstance(val, list):
+                            recommended_approvals = val
+                            break
+                            
+            except Exception as ai_err:
+                print(f"AI Generation failed: {ai_err}")
+        else:
+            print("GROQ_API_KEY is not set.")
+        
+        return {
+            "status": "success", 
+            "data": {
+                "profile": new_profile,
+                "recommended_approvals": recommended_approvals
+            }
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

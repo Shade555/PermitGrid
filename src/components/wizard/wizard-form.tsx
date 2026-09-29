@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock, LayoutDashboard, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const steps = [
   { id: "location", title: "Location", icon: MapPin },
@@ -27,6 +27,19 @@ const steps = [
 
 export function WizardForm() {
   const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    business_name: "Nova Foods Pvt Ltd",
+    entity_type: "Private Limited",
+    industry: "Food Processing",
+    business_activity: "Manufacturing",
+    activity_type: "manufacturing",
+    investment_amount: 50000000,
+    employee_count: 80,
+    project_stage: "Planning"
+  });
   
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -40,7 +53,31 @@ export function WizardForm() {
     }
   };
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/business-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        const result = await res.json();
+        // Save the AI generated approvals to local storage to be read by the Grid
+        if (result.data && result.data.recommended_approvals) {
+          localStorage.setItem("permitgrid_approvals", JSON.stringify(result.data.recommended_approvals));
+          localStorage.setItem("permitgrid_profile", JSON.stringify(formData));
+        }
+        router.push("/dashboard/grid");
+      } else {
+        console.error("Failed to submit profile");
+        setIsSubmitting(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-3xl mx-auto min-h-[600px] flex flex-col bg-card border border-border shadow-2xl rounded-2xl overflow-hidden relative">
@@ -114,7 +151,7 @@ export function WizardForm() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="district">District</Label>
-                      <Input id="district" placeholder="e.g. Pune" />
+                      <Input id="district" placeholder="e.g. Pune" defaultValue="Pune" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="city">City / Taluka</Label>
@@ -135,44 +172,44 @@ export function WizardForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="business-name">Business Name</Label>
-                      <Input id="business-name" placeholder="e.g. Nova Foods Pvt Ltd" />
+                      <Input id="business-name" value={formData.business_name} onChange={(e) => setFormData({...formData, business_name: e.target.value})} placeholder="e.g. Nova Foods Pvt Ltd" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="entity-type">Entity Type</Label>
-                      <Select>
+                      <Select defaultValue="Private Limited">
                         <SelectTrigger>
                           <SelectValue placeholder="Select Type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pvt-ltd">Private Limited</SelectItem>
-                          <SelectItem value="llp">LLP</SelectItem>
-                          <SelectItem value="proprietorship">Proprietorship</SelectItem>
+                          <SelectItem value="Private Limited">Private Limited</SelectItem>
+                          <SelectItem value="LLP">LLP</SelectItem>
+                          <SelectItem value="Proprietorship">Proprietorship</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="activity">Business Activity</Label>
-                      <Select>
+                      <Select defaultValue="Manufacturing">
                         <SelectTrigger>
                           <SelectValue placeholder="Select Activity" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                          <SelectItem value="service">Service</SelectItem>
-                          <SelectItem value="trading">Trading</SelectItem>
+                          <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                          <SelectItem value="Service">Service</SelectItem>
+                          <SelectItem value="Trading">Trading</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="industry">Industry</Label>
-                      <Select>
+                      <Select defaultValue="Food Processing">
                         <SelectTrigger>
                           <SelectValue placeholder="Select Industry" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="food">Food Processing</SelectItem>
-                          <SelectItem value="chemicals">Chemicals</SelectItem>
-                          <SelectItem value="electronics">Electronics</SelectItem>
+                          <SelectItem value="Food Processing">Food Processing</SelectItem>
+                          <SelectItem value="Chemicals">Chemicals</SelectItem>
+                          <SelectItem value="Electronics">Electronics</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -199,7 +236,7 @@ export function WizardForm() {
         <Button 
           variant="outline" 
           onClick={handlePrev} 
-          disabled={currentStep === 0}
+          disabled={currentStep === 0 || isSubmitting}
           className="w-32"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -212,9 +249,12 @@ export function WizardForm() {
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button className="w-auto bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20">
-            Generate Approval Grid
-            <LayoutDashboard className="w-4 h-4 ml-2" />
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-auto bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20">
+            {isSubmitting ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+            ) : (
+              <>Generate Approval Grid <LayoutDashboard className="w-4 h-4 ml-2" /></>
+            )}
           </Button>
         )}
       </div>
