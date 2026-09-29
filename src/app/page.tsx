@@ -279,7 +279,13 @@ export default function Home() {
                     </div>
                     <Input id="password" type="password" className="bg-background/50 border-border/50 h-11" />
                   </div>
-                  <Button className="w-full mt-4 md:mt-6 h-11">
+                  <Button 
+                    className="w-full mt-4 md:mt-6 h-11"
+                    onClick={() => {
+                      setAuthMode("none");
+                      router.push("/wizard");
+                    }}
+                  >
                     {activeCard === "signIn" ? "Sign In" : "Create Account"}
                   </Button>
                 </div>
