@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, FileCheck2, Search, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const container = {
   hidden: { opacity: 0 },
@@ -76,10 +77,12 @@ export default function Home() {
           </motion.p>
 
           <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="h-14 px-8 text-lg w-full sm:w-auto shadow-lg shadow-primary/20">
-              Build My Approval Grid
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link href="/wizard" className="w-full sm:w-auto">
+              <Button size="lg" className="h-14 px-8 text-lg w-full shadow-lg shadow-primary/20">
+                Build My Approval Grid
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button size="lg" variant="outline" className="h-14 px-8 text-lg w-full sm:w-auto bg-background/50">
               Explore the Platform
             </Button>
