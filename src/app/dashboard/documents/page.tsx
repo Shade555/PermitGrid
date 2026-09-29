@@ -254,7 +254,7 @@ export default function DocumentCenter() {
                       </Button>
                     </TableCell>
                   </motion.tr>
-                )))}
+                ))}
               </AnimatePresence>
             </TableBody>
           </Table>
