@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,12 @@ export default function DocumentCenter() {
   const [documents, setDocuments] = useState<any[]>([]);
 
   // Load docs on mount
-  import("react").then((React) => {
-    React.useEffect(() => {
-      const saved = localStorage.getItem("permitgrid_documents");
-      if (saved) {
-        try { setDocuments(JSON.parse(saved)); } catch(e) {}
-      }
-    }, []);
-  });
+  useEffect(() => {
+    const saved = localStorage.getItem("permitgrid_documents");
+    if (saved) {
+      try { setDocuments(JSON.parse(saved)); } catch(e) {}
+    }
+  }, []);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
