@@ -3,13 +3,13 @@
 ## Phase 1: Foundation & Initial Setup (Current)
 - [x] Project created
 - [x] Initialize Next.js project (Frontend)
-- [ ] Install dependencies (Tailwind, Framer Motion, Radix UI/shadcn, Recharts)
-- [ ] Setup Git repository
-- [ ] Define project structure
+- [x] Install dependencies (Tailwind, Framer Motion, Radix UI/shadcn, Recharts)
+- [x] Setup Git repository
+- [x] Define project structure
 
 ## Phase 2: Core UI Components & Landing Page
-- [ ] Design System & Theming
-- [ ] Landing Page implementation (Premium, motion-heavy)
+- [x] Design System & Theming
+- [x] Landing Page implementation (Premium, motion-heavy)
 - [ ] Main Navigation & Layout
 
 ## Phase 3: Business Profile Wizard
