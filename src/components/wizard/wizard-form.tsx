@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock, Loader2, LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const steps = [
