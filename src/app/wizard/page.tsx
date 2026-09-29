@@ -5,8 +5,24 @@ import { WizardForm } from "@/components/wizard/wizard-form";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function WizardPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // If the user already has a registered business profile in local storage,
+    // and they haven't explicitly requested to add a new one, route them to the dashboard.
+    const searchParams = new URLSearchParams(window.location.search);
+    const isNew = searchParams.get("new") === "true";
+    const hasProfile = localStorage.getItem("permitgrid_profile");
+    
+    if (hasProfile && !isNew) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       {/* Background styling */}

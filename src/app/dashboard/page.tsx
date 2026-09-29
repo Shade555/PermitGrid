@@ -8,9 +8,16 @@ import { Button } from "@/components/ui/button";
 export default function DashboardOverview() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-        <p className="text-muted-foreground mt-1">What do you need to do next to legally move your project forward?</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+          <p className="text-muted-foreground mt-1">What do you need to do next to legally move your project forward?</p>
+        </div>
+        <Link href="/wizard?new=true">
+          <Button className="bg-primary hover:bg-primary/90 text-white shadow-md">
+            + Add New Business
+          </Button>
+        </Link>
       </div>
 
       {/* Progress Section */}
