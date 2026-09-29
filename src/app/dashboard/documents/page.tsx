@@ -11,16 +11,20 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileUp, FileText, CheckCircle2, AlertTriangle, Clock, Trash2, Search, Zap } from "lucide-react";
 
-// Mock data for the MVP
-const initialDocuments = [
-  { id: "1", name: "Company_PAN_Card.pdf", type: "Identity Proof", status: "verified", date: "Oct 12, 2026", usedBy: 4 },
-  { id: "2", name: "Pune_Factory_Site_Plan_v2.pdf", type: "Site Plan", status: "needs_review", date: "Oct 14, 2026", usedBy: 2 },
-  { id: "3", name: "Board_Resolution_Signatory.pdf", type: "Authorization", status: "verified", date: "Oct 10, 2026", usedBy: 3 },
-  { id: "4", name: "Pollution_Control_Equip.pdf", type: "Technical Report", status: "pending", date: "Oct 15, 2026", usedBy: 1 },
-];
-
+// No mock data - purely dynamic
 export default function DocumentCenter() {
-  const [documents, setDocuments] = useState(initialDocuments);
+  const [documents, setDocuments] = useState<any[]>([]);
+
+  // Load docs on mount
+  import("react").then((React) => {
+    React.useEffect(() => {
+      const saved = localStorage.getItem("permitgrid_documents");
+      if (saved) {
+        try { setDocuments(JSON.parse(saved)); } catch(e) {}
+      }
+    }, []);
+  });
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showValidation, setShowValidation] = useState(false);
@@ -58,6 +62,20 @@ export default function DocumentCenter() {
       
       const data = await res.json();
       setAiResult(data.data);
+      
+      // Save it dynamically
+      const newDoc = {
+        id: Math.random().toString(36).substring(7),
+        name: file.name,
+        type: data.data.status === "Valid" ? "Verified Upload" : "Pending Fixes",
+        status: data.data.status === "Valid" ? "verified" : "needs_review",
+        date: new Date().toLocaleDateString(),
+        usedBy: 1
+      };
+      const updated = [newDoc, ...documents];
+      setDocuments(updated);
+      localStorage.setItem("permitgrid_documents", JSON.stringify(updated));
+
       setUploadProgress(100);
       setIsUploading(false);
       setShowValidation(true);
@@ -207,7 +225,7 @@ export default function DocumentCenter() {
             </TableHeader>
             <TableBody>
               <AnimatePresence>
-                {filteredDocs.map((doc) => (
+                {filteredDocs.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No documents found. Upload a document to get started.</TableCell></TableRow> : filteredDocs.map((doc) => (
                   <motion.tr 
                     key={doc.id}
                     initial={{ opacity: 0, y: -10 }}
@@ -236,7 +254,7 @@ export default function DocumentCenter() {
                       </Button>
                     </TableCell>
                   </motion.tr>
-                ))}
+                )))}
               </AnimatePresence>
             </TableBody>
           </Table>

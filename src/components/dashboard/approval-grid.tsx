@@ -8,14 +8,7 @@ import { CheckCircle2, CircleDashed, Lock, Clock, FileText, Bot, Building2, Spar
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-const fallbackApprovals = [
-  { id: "bus-reg", name: "Business Registration", authority: "MCA", status: "approved", stage: "setup" },
-  { id: "build-app", name: "Building Approval", authority: "MIDC / Local Body", status: "in-progress", stage: "parallel-1" },
-  { id: "fire-noc", name: "Fire NOC (Prov)", authority: "Maharashtra Fire Services", status: "pending", stage: "parallel-1" },
-  { id: "mpcb-cte", name: "MPCB Consent to Establish", authority: "MPCB", status: "pending", stage: "parallel-1" },
-  { id: "factory-plan", name: "Factory Plan Approval", authority: "DISH", status: "locked", stage: "parallel-2" },
-  { id: "fssai", name: "FSSAI State Licence", authority: "FDA Maharashtra", status: "locked", stage: "operations" },
-];
+
 
 const StatusIcon = ({ status }: { status: string }) => {
   switch (status) {
@@ -140,7 +133,6 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
 
 export function ApprovalGrid() {
   const [approvals, setApprovals] = useState<any[]>([]);
-  const [isDynamic, setIsDynamic] = useState(false);
 
   useEffect(() => {
     const aiData = localStorage.getItem("permitgrid_approvals");
@@ -149,117 +141,66 @@ export function ApprovalGrid() {
         const parsed = JSON.parse(aiData);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setApprovals(parsed);
-          setIsDynamic(true);
-        } else {
-          setApprovals(fallbackApprovals);
         }
-      } catch (e) {
-        setApprovals(fallbackApprovals);
-      }
-    } else {
-      setApprovals(fallbackApprovals);
+      } catch (e) {}
     }
   }, []);
 
-  if (approvals.length === 0) return <div className="p-8 text-center">Loading Grid...</div>;
+  if (approvals.length === 0) {
+    return (
+      <div className="p-16 text-center">
+        <h2 className="text-xl font-bold mb-2">No Grid Generated</h2>
+        <p className="text-muted-foreground mb-4">Complete the business wizard to generate your regulatory roadmap.</p>
+        <Button onClick={() => window.location.href = '/wizard?new=true'}>Go to Wizard</Button>
+      </div>
+    );
+  }
 
-  // If using AI data, we map them into stages
   const preEst = approvals.filter(a => a.stage === 'pre-establishment' || a.stage === 'parallel-1');
   const preOp = approvals.filter(a => a.stage === 'pre-operation' || a.stage === 'parallel-2');
   const op = approvals.filter(a => a.stage === 'operations');
   const others = approvals.filter(a => !['pre-establishment', 'parallel-1', 'pre-operation', 'parallel-2', 'operations'].includes(a.stage));
 
-  if (isDynamic) {
-    return (
-      <div className="w-full pb-12 pt-8 px-4 max-w-5xl mx-auto">
-        <div className="flex flex-col gap-12 relative">
-          {/* Vertical spine line */}
-          <div className="absolute left-1/2 top-4 bottom-4 w-px bg-border -translate-x-1/2 -z-10 hidden md:block" />
-
-          {preEst.length > 0 && (
-            <div className="flex flex-col items-center">
-              <Badge variant="outline" className="mb-6 bg-background">Phase 1: Pre-Establishment</Badge>
-              <div className="flex flex-wrap justify-center gap-6">
-                {preEst.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
-              </div>
-            </div>
-          )}
-
-          {preOp.length > 0 && (
-            <div className="flex flex-col items-center">
-              <Badge variant="outline" className="mb-6 bg-background">Phase 2: Pre-Operation</Badge>
-              <div className="flex flex-wrap justify-center gap-6">
-                {preOp.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
-              </div>
-            </div>
-          )}
-
-          {op.length > 0 && (
-            <div className="flex flex-col items-center">
-              <Badge variant="outline" className="mb-6 bg-background">Phase 3: Operations</Badge>
-              <div className="flex flex-wrap justify-center gap-6">
-                {op.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
-              </div>
-            </div>
-          )}
-
-          {others.length > 0 && (
-            <div className="flex flex-col items-center">
-              <Badge variant="outline" className="mb-6 bg-background">Other Applicable Approvals</Badge>
-              <div className="flex flex-wrap justify-center gap-6">
-                {others.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback visual grid if no AI data
   return (
-    <div className="w-full overflow-x-auto pb-12 pt-8 px-4 flex justify-center">
-      <div className="flex flex-col items-center relative min-w-max">
-        {/* Background Connecting Lines */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10" style={{ minHeight: '600px' }}>
-          <path d="M 500,120 L 500,180" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 200,180 L 800,180" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 200,180 L 200,220" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 500,180 L 500,220" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 800,180 L 800,220" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 200,360 L 200,420" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 500,360 L 500,420" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 200,420 L 500,420" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-          <path d="M 500,420 L 500,480" stroke="var(--border)" strokeWidth="2" fill="none" strokeDasharray="4 4" />
-        </svg>
+    <div className="w-full pb-12 pt-8 px-4 max-w-5xl mx-auto">
+      <div className="flex flex-col gap-12 relative">
+        <div className="absolute left-1/2 top-4 bottom-4 w-px bg-border -translate-x-1/2 -z-10 hidden md:block" />
 
-        <div className="mb-16 flex flex-col items-center w-[1000px]">
-          <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Phase 1: Business Setup</div>
-          <ApprovalCard approval={approvals[0]} index={0} />
-        </div>
-
-        <div className="mb-16 flex flex-col items-center w-[1000px]">
-          <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Phase 2: Pre-Establishment</div>
-          <div className="flex gap-12 justify-center w-full">
-            <ApprovalCard approval={approvals[1]} index={1} />
-            <ApprovalCard approval={approvals[2]} index={2} />
-            <ApprovalCard approval={approvals[3]} index={3} />
+        {preEst.length > 0 && (
+          <div className="flex flex-col items-center">
+            <Badge variant="outline" className="mb-6 bg-background">Phase 1: Pre-Establishment</Badge>
+            <div className="flex flex-wrap justify-center gap-6">
+              {preEst.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="mb-16 flex flex-col items-center w-[1000px]">
-          <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Phase 3: Pre-Operation</div>
-          <div className="flex gap-12 justify-center w-full">
-            <div className="w-[280px]"></div>
-            <ApprovalCard approval={approvals[4]} index={4} />
-            <div className="w-[280px]"></div>
+        {preOp.length > 0 && (
+          <div className="flex flex-col items-center">
+            <Badge variant="outline" className="mb-6 bg-background">Phase 2: Pre-Operation</Badge>
+            <div className="flex flex-wrap justify-center gap-6">
+              {preOp.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex flex-col items-center w-[1000px]">
-          <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Phase 4: Operations</div>
-          <ApprovalCard approval={approvals[5]} index={5} />
-        </div>
+        {op.length > 0 && (
+          <div className="flex flex-col items-center">
+            <Badge variant="outline" className="mb-6 bg-background">Phase 3: Operations</Badge>
+            <div className="flex flex-wrap justify-center gap-6">
+              {op.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
+            </div>
+          </div>
+        )}
+
+        {others.length > 0 && (
+          <div className="flex flex-col items-center">
+            <Badge variant="outline" className="mb-6 bg-background">Other Applicable Approvals</Badge>
+            <div className="flex flex-wrap justify-center gap-6">
+              {others.map((app, i) => <ApprovalCard key={i} approval={app} index={i} isAI={true} />)}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

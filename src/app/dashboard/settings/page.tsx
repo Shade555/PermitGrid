@@ -11,8 +11,8 @@ import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("John Doe");
-  const [businessName, setBusinessName] = useState("Nova Foods Pvt Ltd");
+  const [userName, setUserName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [activeTab, setActiveTab] = useState<"profile" | "business" | "security" | "notifications">("profile");
 
   useEffect(() => {

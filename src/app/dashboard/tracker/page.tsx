@@ -9,33 +9,14 @@ import { CheckCircle2, Clock, AlertCircle, FileText, ArrowRight, MessageSquareWa
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-const mockApplications = [
-  {
-    id: "app-1",
-    name: "MPCB Consent to Establish",
-    department: "Maharashtra Pollution Control Board",
-    status: "query_raised",
-    submittedOn: "Oct 10, 2026",
-    estimatedCompletion: "Nov 05, 2026",
-    progress: 60,
-    timeline: [
-      { step: "Application Submitted", date: "Oct 10, 2026", status: "completed" },
-      { step: "Initial Scrutiny", date: "Oct 12, 2026", status: "completed" },
-      { step: "Department Review", date: "Oct 15, 2026", status: "query_raised", note: "Missing signature on Factory Layout Plan." },
-      { step: "Site Inspection", date: "Pending", status: "pending" },
-      { step: "Final Approval", date: "Pending", status: "pending" },
-    ]
-  }
-];
-
 const generateDynamicTracker = () => {
-  if (typeof window === 'undefined') return mockApplications;
+  if (typeof window === 'undefined') return [];
   const saved = localStorage.getItem("permitgrid_approvals");
-  if (!saved) return mockApplications;
+  if (!saved) return [];
   
   try {
     const approvals = JSON.parse(saved);
-    if (!approvals || approvals.length === 0) return mockApplications;
+    if (!approvals || approvals.length === 0) return [];
     
     return approvals.slice(0, 3).map((app: any, idx: number) => {
       const statusMap = ["query_raised", "in_progress", "approved"];
@@ -59,7 +40,7 @@ const generateDynamicTracker = () => {
       };
     });
   } catch (e) {
-    return mockApplications;
+    return [];
   }
 };
 
@@ -87,8 +68,8 @@ const TimelineIcon = ({ status }: { status: string }) => {
 };
 
 export default function ApplicationTracker() {
-  const [applications, setApplications] = useState<any[]>(mockApplications);
-  const [selectedApp, setSelectedApp] = useState<any>(mockApplications[0]);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [selectedApp, setSelectedApp] = useState<any>(null);
   const [resolvingQuery, setResolvingQuery] = useState(false);
   const [queryResolved, setQueryResolved] = useState(false);
 
@@ -114,6 +95,17 @@ export default function ApplicationTracker() {
       
     }, 1500);
   };
+
+  if (applications.length === 0 || !selectedApp) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto h-full flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
+        <h1 className="text-2xl font-bold tracking-tight mb-2">No Active Applications</h1>
+        <p className="text-muted-foreground mb-6 max-w-md">You haven't initiated any applications yet. Complete the wizard to populate your tracking dashboard.</p>
+        <Button onClick={() => window.location.href = "/wizard?new=true"}>Start Wizard</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto h-full flex flex-col">
