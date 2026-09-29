@@ -66,7 +66,7 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
                 <FileText className="w-3.5 h-3.5" />
                 <span>Documents</span>
               </div>
-              <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-primary">View Details</Button>
+              <span className="h-6 text-xs px-2 text-primary hover:bg-primary/10 rounded-md inline-flex items-center justify-center font-medium transition-colors">View Details</span>
             </div>
           </Card>
         </motion.div>
