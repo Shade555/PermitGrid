@@ -192,11 +192,11 @@ export default function ApplicationTracker() {
                       </p>
                       
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
+                        <DialogTrigger>
+                          <span className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-8 px-3 text-destructive-foreground bg-destructive hover:bg-destructive/90 cursor-pointer">
                             <UploadCloud className="w-4 h-4 mr-2" />
                             Upload Revised Document
-                          </Button>
+                          </span>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>

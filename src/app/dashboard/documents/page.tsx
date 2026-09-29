@@ -67,11 +67,11 @@ export default function DocumentCenter() {
         </div>
         
         <Dialog open={showValidation} onOpenChange={setShowValidation}>
-          <DialogTrigger asChild>
-            <Button onClick={handleSimulatedUpload} disabled={isUploading} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+          <DialogTrigger>
+            <span onClick={handleSimulatedUpload} className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-9 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 ${isUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
               <FileUp className="w-4 h-4 mr-2" />
               Upload Document
-            </Button>
+            </span>
           </DialogTrigger>
           
           <DialogContent className="sm:max-w-md">
