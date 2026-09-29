@@ -24,7 +24,7 @@ export default function Home() {
     <div className="min-h-screen bg-transparent overflow-hidden selection:bg-primary/20 relative">
       <GradientBackground />
 
-      <nav className="relative z-10 border-b border-border/10 bg-background/5 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/10 bg-background/5 backdrop-blur-md">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -39,7 +39,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="relative z-10 container mx-auto px-6 pt-24 pb-32">
+      <main className="relative z-10 container mx-auto px-6 pt-32 pb-32">
         <motion.div 
           variants={container}
           initial="hidden"

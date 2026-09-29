@@ -24,4 +24,9 @@
 ## Phase 5: Backend & AI Integration (Current)
 - [x] Setup Python/FastAPI Backend (Initialized)
 - [x] Setup Supabase (PostgreSQL, Auth, Storage) (Schema created, waiting for credentials)
-- [ ] AI Integration (RAG, Requirements Matching)
+- [x] AI Integration (RAG, Requirements Matching)
+
+## Phase 6: Document Center & Validation (Current)
+- [ ] Document Center Layout (/dashboard/documents)
+- [ ] Document Upload Flow & Status UI
+- [ ] AI Pre-validation Readiness Checker (Mocked UI first, then Backend)
