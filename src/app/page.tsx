@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, FileCheck2, Search, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { GradientBackground } from "@/components/ui/paper-design-shader-background";
 
 const container = {
   hidden: { opacity: 0 },
@@ -20,14 +21,10 @@ const item = {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background overflow-hidden selection:bg-primary/20">
-      {/* Abstract Background Elements */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-secondary/5 blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-transparent overflow-hidden selection:bg-primary/20 relative">
+      <GradientBackground />
 
-      <nav className="relative z-10 border-b border-border/50 bg-background/50 backdrop-blur-md">
+      <nav className="relative z-10 border-b border-border/10 bg-background/5 backdrop-blur-md">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
