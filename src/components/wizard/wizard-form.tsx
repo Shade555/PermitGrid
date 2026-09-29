@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock, LayoutDashboard, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, MapPin, Scale, Factory, AlertCircle, CalendarClock, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const steps = [
@@ -38,9 +38,13 @@ export function WizardForm() {
     activity_type: "manufacturing",
     investment_amount: 50000000,
     employee_count: 80,
-    project_stage: "Planning"
+    project_stage: "Planning",
+    state: "Maharashtra",
+    district: "Pune",
+    city: "Haveli",
+    pin: "411001"
   });
-  
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(curr => curr + 1);
@@ -53,6 +57,10 @@ export function WizardForm() {
     }
   };
 
+  const updateField = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -63,14 +71,13 @@ export function WizardForm() {
       });
       if (res.ok) {
         const result = await res.json();
-        // Save the AI generated approvals to local storage to be read by the Grid
         if (result.data && result.data.recommended_approvals) {
           localStorage.setItem("permitgrid_approvals", JSON.stringify(result.data.recommended_approvals));
           localStorage.setItem("permitgrid_profile", JSON.stringify(formData));
         }
         router.push("/dashboard/grid");
       } else {
-        console.error("Failed to submit profile");
+        console.error("Failed to submit profile", await res.text());
         setIsSubmitting(false);
       }
     } catch (e) {
@@ -80,7 +87,7 @@ export function WizardForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto min-h-[600px] flex flex-col bg-card border border-border shadow-2xl rounded-2xl overflow-hidden relative">
+    <div className="w-full max-w-4xl mx-auto flex flex-col bg-card border border-border shadow-2xl rounded-2xl overflow-hidden relative min-h-[650px]">
       {/* Header */}
       <div className="px-8 py-6 bg-muted/30 border-b border-border flex flex-col gap-4">
         <div className="flex justify-between items-center">
@@ -117,8 +124,8 @@ export function WizardForm() {
         </div>
       </div>
 
-      {/* Form Content */}
-      <div className="flex-1 p-8 relative overflow-hidden">
+      {/* Form Content - Removed overflow-y-auto to stop inner scrolling */}
+      <div className="flex-1 p-8 relative flex flex-col">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentStep}
@@ -126,113 +133,211 @@ export function WizardForm() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="absolute inset-0 p-8 overflow-y-auto"
+            className="flex-1 flex flex-col"
           >
-            <div className="flex flex-col h-full">
-              <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                {steps[currentStep].title}
-              </h3>
+            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              {steps[currentStep].title}
+            </h3>
+            
+            <div className="flex-1 space-y-6">
               
-              <div className="flex-1 space-y-6 pb-20">
-                {currentStep === 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State</Label>
-                      <Select defaultValue="maharashtra">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select State" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="maharashtra">Maharashtra</SelectItem>
-                          <SelectItem value="gujarat">Gujarat</SelectItem>
-                          <SelectItem value="karnataka">Karnataka</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="district">District</Label>
-                      <Input id="district" placeholder="e.g. Pune" defaultValue="Pune" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City / Taluka</Label>
-                      <Input id="city" placeholder="e.g. Haveli" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="pin">PIN Code</Label>
-                      <Input id="pin" placeholder="e.g. 411001" />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="industrial-area">Industrial Area / MIDC (Optional)</Label>
-                      <Input id="industrial-area" placeholder="e.g. Hinjewadi Phase 1" />
-                    </div>
+              {/* Step 0: Location */}
+              {currentStep === 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>State</Label>
+                    <Select value={formData.state} onValueChange={(v) => updateField("state", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                        <SelectItem value="Gujarat">Gujarat</SelectItem>
+                        <SelectItem value="Karnataka">Karnataka</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-
-                {currentStep === 1 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="business-name">Business Name</Label>
-                      <Input id="business-name" value={formData.business_name} onChange={(e) => setFormData({...formData, business_name: e.target.value})} placeholder="e.g. Nova Foods Pvt Ltd" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="entity-type">Entity Type</Label>
-                      <Select defaultValue="Private Limited">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Private Limited">Private Limited</SelectItem>
-                          <SelectItem value="LLP">LLP</SelectItem>
-                          <SelectItem value="Proprietorship">Proprietorship</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="activity">Business Activity</Label>
-                      <Select defaultValue="Manufacturing">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Activity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                          <SelectItem value="Service">Service</SelectItem>
-                          <SelectItem value="Trading">Trading</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="industry">Industry</Label>
-                      <Select defaultValue="Food Processing">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Food Processing">Food Processing</SelectItem>
-                          <SelectItem value="Chemicals">Chemicals</SelectItem>
-                          <SelectItem value="Electronics">Electronics</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label>District</Label>
+                    <Input value={formData.district} onChange={(e) => updateField("district", e.target.value)} placeholder="e.g. Pune" />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <Label>City / Taluka</Label>
+                    <Input value={formData.city} onChange={(e) => updateField("city", e.target.value)} placeholder="e.g. Haveli" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>PIN Code</Label>
+                    <Input value={formData.pin} onChange={(e) => updateField("pin", e.target.value)} placeholder="e.g. 411001" />
+                  </div>
+                </div>
+              )}
 
-                {currentStep > 1 && (
-                  <div className="flex items-center justify-center h-full min-h-[200px]">
-                    <p className="text-muted-foreground text-center">
-                      Additional fields for {steps[currentStep].title} will go here.
-                      <br/>
-                      (Placeholder for demo)
+              {/* Step 1: Business Profile */}
+              {currentStep === 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Business Name</Label>
+                    <Input value={formData.business_name} onChange={(e) => updateField("business_name", e.target.value)} placeholder="e.g. Nova Foods Pvt Ltd" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Entity Type</Label>
+                    <Select value={formData.entity_type} onValueChange={(v) => updateField("entity_type", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select Type" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Private Limited">Private Limited</SelectItem>
+                        <SelectItem value="LLP">LLP</SelectItem>
+                        <SelectItem value="Proprietorship">Proprietorship</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Industry</Label>
+                    <Select value={formData.industry} onValueChange={(v) => updateField("industry", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select Industry" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Food Processing">Food Processing</SelectItem>
+                        <SelectItem value="Chemicals">Chemicals</SelectItem>
+                        <SelectItem value="Textiles">Textiles</SelectItem>
+                        <SelectItem value="Electronics">Electronics</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Scale & Capacity */}
+              {currentStep === 2 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Investment Amount (₹)</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.investment_amount} 
+                      onChange={(e) => updateField("investment_amount", parseFloat(e.target.value))} 
+                      placeholder="50000000" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employee Count</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.employee_count} 
+                      onChange={(e) => updateField("employee_count", parseInt(e.target.value))} 
+                      placeholder="80" 
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2 p-4 bg-muted/50 rounded-lg border border-border">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Automated Classification</p>
+                    <p className="text-sm">
+                      Based on MSME rules, an investment of ₹{formData.investment_amount.toLocaleString()} classifies this unit as: 
+                      <span className="font-bold text-primary ml-1">
+                        {formData.investment_amount > 500000000 ? "Medium/Large Enterprise" : formData.investment_amount > 100000000 ? "Small Enterprise" : "Micro Enterprise"}
+                      </span>
                     </p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Step 3: Operations */}
+              {currentStep === 3 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Core Activity</Label>
+                    <Select value={formData.business_activity} onValueChange={(v) => updateField("business_activity", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select Activity" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Service">Service</SelectItem>
+                        <SelectItem value="Trading">Trading</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Activity Type</Label>
+                    <Select value={formData.activity_type} onValueChange={(v) => updateField("activity_type", v)}>
+                      <SelectTrigger><SelectValue placeholder="Specific Type" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manufacturing">Product Manufacturing</SelectItem>
+                        <SelectItem value="assembly">Assembly Line</SelectItem>
+                        <SelectItem value="processing">Raw Material Processing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <div className="flex items-center space-x-2 border p-4 rounded-lg bg-background">
+                      <Checkbox id="hazardous" />
+                      <div className="grid gap-1.5 leading-none">
+                        <label htmlFor="hazardous" className="text-sm font-medium leading-none">Handles Hazardous Materials?</label>
+                        <p className="text-sm text-muted-foreground">Check this if your facility processes chemicals, bio-waste, or flammable liquids.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Special Conditions */}
+              {currentStep === 4 && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">Select any special conditions that apply to your project. This affects NOC requirements.</p>
+                  
+                  <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <Checkbox id="groundwater" className="mt-1" />
+                    <div className="grid gap-1">
+                      <label htmlFor="groundwater" className="text-sm font-medium">Groundwater Extraction</label>
+                      <p className="text-xs text-muted-foreground">Facility requires sinking a new borewell or extracting groundwater.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <Checkbox id="boiler" className="mt-1" />
+                    <div className="grid gap-1">
+                      <label htmlFor="boiler" className="text-sm font-medium">Boiler Operation</label>
+                      <p className="text-xs text-muted-foreground">Manufacturing involves the use of industrial boilers.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <Checkbox id="effluent" className="mt-1" defaultChecked />
+                    <div className="grid gap-1">
+                      <label htmlFor="effluent" className="text-sm font-medium">Industrial Effluent Discharge</label>
+                      <p className="text-xs text-muted-foreground">Generates liquid waste that requires treatment (ETP).</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Project Stage */}
+              {currentStep === 5 && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Current Stage of Project</Label>
+                    <Select value={formData.project_stage} onValueChange={(v) => updateField("project_stage", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select Stage" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Planning">Planning / Pre-establishment</SelectItem>
+                        <SelectItem value="Construction">Under Construction</SelectItem>
+                        <SelectItem value="Pre-operation">Pre-operation / Ready for Inspection</SelectItem>
+                        <SelectItem value="Operational">Fully Operational</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="p-6 bg-primary/10 border border-primary/20 rounded-xl mt-6">
+                    <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
+                      <LayoutDashboard className="w-5 h-5" /> Ready to Generate Approval Grid
+                    </h4>
+                    <p className="text-sm text-foreground/80">
+                      PermitGrid AI will now analyze your {formData.industry} facility profile in {formData.state} and compile a complete regulatory roadmap.
+                    </p>
+                  </div>
+                </div>
+              )}
+
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Footer / Actions */}
-      <div className="p-6 bg-background border-t border-border flex justify-between items-center sticky bottom-0">
+      <div className="p-6 bg-background border-t border-border flex justify-between items-center mt-auto">
         <Button 
           variant="outline" 
           onClick={handlePrev} 
@@ -249,11 +354,13 @@ export function WizardForm() {
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-auto bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20">
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-48 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
             {isSubmitting ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing...
+              </>
             ) : (
-              <>Generate Approval Grid <LayoutDashboard className="w-4 h-4 ml-2" /></>
+              "Generate Grid"
             )}
           </Button>
         )}
