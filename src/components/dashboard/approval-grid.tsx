@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, CircleDashed, Lock, Clock, FileText, Bot } from "lucide-react";
+import { CheckCircle2, CircleDashed, Lock, Clock, FileText, Bot, Building2, Sparkles, ArrowRightCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -71,41 +71,64 @@ const ApprovalCard = ({ approval, index, isAI }: { approval: any, index: number,
           </Card>
         </motion.div>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <div className="flex items-center justify-between mb-2 pr-6">
+      <DialogContent className="max-w-2xl sm:p-8">
+        <DialogHeader className="mb-4">
+          <div className="flex items-center justify-between mb-4">
             <StatusBadge status={status} />
-            <span className="text-xs text-muted-foreground uppercase tracking-widest">{approval.stage}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-full">{approval.stage}</span>
           </div>
-          <DialogTitle className="text-2xl">{approval.name}</DialogTitle>
-          <DialogDescription className="text-base text-foreground font-medium">
-            Authority: {approval.authority}
+          <DialogTitle className="text-2xl font-bold tracking-tight mb-1">{approval.name}</DialogTitle>
+          <DialogDescription className="text-sm font-medium flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-muted-foreground" />
+            {approval.authority}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-semibold mb-2">Why it may apply <Badge variant="secondary" className="ml-2 text-[10px]">AI Assessment</Badge></h4>
-              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border border-border/50 leading-relaxed">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+          <div className="space-y-6">
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-foreground">Why it applies</h4>
+                <Badge className="bg-teal-500/10 text-teal-500 hover:bg-teal-500/20 border-teal-500/20 text-[10px] font-medium h-5 px-1.5 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> AI Assessment
+                </Badge>
+              </div>
+              <div className="text-sm text-foreground/80 bg-muted/40 p-4 rounded-xl border border-border/50 leading-relaxed shadow-inner">
                 {approval.why_it_applies || "Based on your business profile, location, and operations, this approval is flagged as required."}
-              </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold mb-2">Required Documents</h4>
-              <ul className="space-y-2 bg-background p-3 rounded-md border border-border/50">
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CircleDashed className="w-4 h-4" /> Standard business documents
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Required Documents</h4>
+              <ul className="space-y-2 bg-background p-4 rounded-xl border border-border/50 shadow-sm">
+                <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                  <div className="mt-0.5 rounded-full p-1 bg-primary/10">
+                    <FileText className="w-3 h-3 text-primary" />
+                  </div>
+                  <span className="leading-snug">Standard business incorporation & identity documents</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                  <div className="mt-0.5 rounded-full p-1 bg-primary/10">
+                    <FileText className="w-3 h-3 text-primary" />
+                  </div>
+                  <span className="leading-snug">Site plan & layout schematics</span>
                 </li>
               </ul>
             </div>
+
           </div>
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-semibold mb-2">Next Action</h4>
-              <div className="bg-primary/10 border border-primary/20 p-4 rounded-md">
-                <p className="text-sm font-medium text-primary mb-3">Prepare required documentation</p>
-                <Button size="sm" className="w-full">Go to Document Center</Button>
+
+          <div className="space-y-6 h-full flex flex-col">
+            <div className="space-y-3 flex-1 h-full flex flex-col">
+              <h4 className="text-sm font-semibold text-foreground">Next Action</h4>
+              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6 rounded-xl flex flex-col flex-1 justify-center text-center relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <ArrowRightCircle className="w-24 h-24 text-primary translate-x-4 -translate-y-4" />
+                </div>
+                <h3 className="font-semibold text-primary mb-2 text-lg relative z-10">Prepare Documentation</h3>
+                <p className="text-xs text-primary/80 mb-6 relative z-10">Head over to the Document Center to auto-generate or upload requirements.</p>
+                <Button className="w-full relative z-10 shadow-lg shadow-primary/20">Go to Document Center</Button>
               </div>
             </div>
           </div>
