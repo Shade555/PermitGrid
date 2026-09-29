@@ -64,8 +64,7 @@ export function WizardForm() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${apiUrl}/api/business-profile`, {
+      const res = await fetch(`/api/business-profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
