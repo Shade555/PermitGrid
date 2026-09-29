@@ -27,6 +27,11 @@
 - [x] AI Integration (RAG, Requirements Matching)
 
 ## Phase 6: Document Center & Validation (Current)
-- [ ] Document Center Layout (/dashboard/documents)
-- [ ] Document Upload Flow & Status UI
-- [ ] AI Pre-validation Readiness Checker (Mocked UI first, then Backend)
+- [x] Document Center Layout (/dashboard/documents)
+- [x] Document Upload Flow & Status UI
+- [x] AI Pre-validation Readiness Checker (Mocked UI first, then Backend)
+
+## Phase 7: Application Tracker (Current)
+- [ ] Application Tracker Layout (/dashboard/tracker)
+- [ ] Application Progress Timeline
+- [ ] Government Query/Response Simulation

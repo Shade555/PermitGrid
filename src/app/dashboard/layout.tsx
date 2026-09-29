@@ -19,6 +19,7 @@ const sidebarItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
   { icon: CheckSquare, label: "Approval Grid", href: "/dashboard/grid" },
   { icon: FileText, label: "Document Center", href: "/dashboard/documents" },
+  { icon: Building2, label: "Application Tracker", href: "/dashboard/tracker" },
   { icon: Calendar, label: "Compliance Calendar", href: "/dashboard/calendar" },
   { icon: Settings, label: "Settings", href: "/dashboard/settings" },
 ];
